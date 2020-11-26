@@ -71,14 +71,34 @@ sub tool {
 }
 
 sub intranet_catalog_biblio_tab {                                                                                                                           
+    my ( $self, $args ) = @_;
     my @tabs;                                                                                                                                               
-    push @tabs,                                                                                                                                             
+    my $query = $self->{'cgi'};
+    my $biblio = $query->param('biblio');
+    my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
+    my $ark_id;
+    if (defined $biblio) {
+      my $marc_record = $biblio->metadata->record;
+      $ark_id = $marc_record->subfield('033','a');
+    }
+
+    return @tabs unless $ark_id;
+
+    my $query = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$ark_id") . }/);
+    my $iterator = $query->execute($endpoint);
+
+    my @rdf_data;
+    while (my $row = $iterator->next) {
+        push @rdf_data, $row->{s}->as_string;
       Koha::Plugins::Tab->new(                                                                                                                              
         {                                                                                                                                                   
             title   => 'WikiData',                                                                                                                            
             content => 'This is content for tab 1'                                                                                                          
         }                                                                                                                                                   
       );                                                                                                                                                    
+    }
+
+    push @tabs,                                                                                                                                             
                                                                                                                                                             
     push @tabs,                                                                                                                                             
       Koha::Plugins::Tab->new(                                                                                                                              
