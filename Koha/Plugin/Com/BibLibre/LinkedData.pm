@@ -4,6 +4,7 @@ use base qw(Koha::Plugins::Base);
 
 use Modern::Perl;
 use RDF::Query::Client; 
+use Data::Dumper;
 
 use C4::Context;
 use Koha::Plugins::Tab;
@@ -75,30 +76,31 @@ sub intranet_catalog_biblio_tab {
     my @tabs;                                                                                                                                               
     my $query = $self->{'cgi'};
     my $biblio = $query->param('biblio');
+    my $biblionumber = $query->param('biblionumber');
     my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
     my $ark_id;
-    if (defined $biblio) {
-      my $marc_record = $biblio->metadata->record;
-      $ark_id = $marc_record->subfield('033','a');
-    }
 
+    return @tabs unless $biblio;
+
+    my $marc_record = $biblio->metadata->record;
+    $ark_id = $marc_record->subfield('033','a');
+    warn $ark_id;
     return @tabs unless $ark_id;
 
-    my $query = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$ark_id") . }/);
-    my $iterator = $query->execute($endpoint);
+    my $rdfquery = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$ark_id") . }/);
+    my $iterator = $rdfquery->execute($endpoint);
 
     my @rdf_data;
     while (my $row = $iterator->next) {
-        push @rdf_data, $row->{s}->as_string;
+      push @tabs,
       Koha::Plugins::Tab->new(                                                                                                                              
         {                                                                                                                                                   
             title   => 'WikiData',                                                                                                                            
-            content => 'This is content for tab 1'                                                                                                          
+            content => $row->{s}->as_string
         }                                                                                                                                                   
       );                                                                                                                                                    
     }
 
-    push @tabs,                                                                                                                                             
                                                                                                                                                             
     push @tabs,                                                                                                                                             
       Koha::Plugins::Tab->new(                                                                                                                              
