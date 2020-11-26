@@ -1,0 +1,105 @@
+[% USE raw %]
+[% USE Branches %]
+[% SET footerjs = 1 %]
+[% PROCESS 'html_helpers.inc' %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Import BDP</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs">
+    <a href="/cgi-bin/koha/mainpage.pl">Accueil</a>
+    &rsaquo; <a href="/cgi-bin/koha/tools/tools-home.pl">Outils</a>
+    &rsaquo; <a href="/cgi-bin/koha/plugins/run.pl?class=[% CLASS | uri %]&amp;method=[% METHOD | uri %]">Import BDP</a>
+</div>
+
+<div class="main container-fluid">
+<div class="row">
+
+<div id="koha-plugin-linked-data-main">
+
+    <div id="koha-plugin-linked-data-tabs" class="toptabs col-sm-12">
+        <ul>
+            <li><a href="#koha-plugin-linked-data-t1">Import BDP</a></li>
+            <li><a href="#koha-plugin-linked-data-t2">Retour BDP</a></li>
+        </ul>
+
+        <div id="koha-plugin-linked-data-t1">
+            <p>
+                Pour importer les notices de la BDP, chargez un fichier, puis choisissez le site auquel seront rattachés les exemplaires :
+            </p>
+            <form id="koha-plugin-linked-data-form-import" action="/cgi-bin/koha/plugins/run.pl" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="op" value="import" />
+                <input type="hidden" name="class" value="[% CLASS | html %]" />
+                <input type="hidden" name="method" value="[% METHOD | html %]" />
+                <fieldset class="rows" id="import_bdp_entry">
+                    <ol>
+                        <li><input type="file" name="bdpfile" /></li>
+                        <li>
+                            <select name="branchcode">
+                                [% PROCESS options_for_libraries libraries => Branches.all() %]
+                            </select>
+                        </li>
+                        <li><input type="checkbox" name="test" /> Mode test</li>
+                    </ol>
+                </fieldset>
+                <fieldset class="action">
+                    <input type="submit" value="Import" />
+                </fieldset>
+            </form>
+            <div class="koha-plugin-linked-data-logs">
+                [% IF ( op == 'import' AND script_logs ) %]
+                    <h2>[% filename | html %]</h2>
+                    <pre>[% script_logs | $raw %]</pre>
+                [% END %]
+            </div>
+        </div> <!-- /#koha-plugin-linked-data-t1 -->
+        <div id="koha-plugin-linked-data-t2">
+            <p>
+                Pour effectuer un retour BDP, chargez un fichier ci-dessous :
+            </p>
+            <form id="koha-plugin-linked-data-form-return" action="/cgi-bin/koha/plugins/run.pl" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="op" value="return" />
+                <input type="hidden" name="class" value="[% CLASS | html %]" />
+                <input type="hidden" name="method" value="[% METHOD | html %]" />
+                <fieldset class="rows" id="return_bdp_entry">
+                    <ol>
+                        <li><input type="file" name="returnbdpfile" /></li>
+                        <li><input type="checkbox" name="test" /> Mode test</li>
+                    </ol>
+                </fieldset>
+                <fieldset class="action">
+                    <input type="submit" value="Retour" />
+                </fieldset>
+            </form>
+            <div class="koha-plugin-linked-data-logs">
+                [% IF ( op == 'return' AND script_logs ) %]
+                    <h2>[% filename | html %]</h2>
+                    <pre>[% script_logs | $raw %]</pre>
+                [% END %]
+            </div>
+        </div> <!-- /#koha-plugin-linked-data-t2 -->
+
+    </div> <!-- /#koha-plugin-linked-data-tabs -->
+
+</div> <!-- /#koha-plugin-linked-data-main -->
+
+</div> <!-- /.row -->
+
+[% MACRO jsinclude BLOCK %]
+    <script>
+        $(document).ready(function() {
+            var tabs = $('#koha-plugin-linked-data-tabs').tabs();
+            var op = '[% op | html %]';
+            if ('import' == op) {
+                tabs.tabs("option", "active", 0);
+            } else if ('return' == op) {
+                tabs.tabs("option", "active", 1);
+            }
+        });
+    </script>
+[% END %]
+[% INCLUDE 'intranet-bottom.inc' %]
