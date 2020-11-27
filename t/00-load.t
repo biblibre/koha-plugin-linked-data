@@ -20,12 +20,15 @@ use Test::More;
 
 use Modern::Perl;
 
+use t::lib::TestBuilder;
 use Test::More;
 use File::Spec;
 use File::Find;
 
 =head1 DESCRIPTION
 =cut
+
+my $builder = t::lib::TestBuilder->new();
 
 my $lib = '/home/koha/lib/koha-plugin-linked-data/'; # Could be changed to $Bin/..
 
@@ -49,6 +52,24 @@ find(
     $lib
 );
 
-my $biblio = '';
+#my $biblio = $builder->build_sample_biblio();
+#warn Data::Dumper::Dumper($biblio->biblionumber);
 
+    my $record = MARC::Record->new();
+    my ( $tag, $subfield ) = $marcflavour eq 'UNIMARC' ? ( 200, 'a' ) : ( 245, 'a' );
+    $record->append_fields(
+        MARC::Field->new( $tag, ' ', ' ', $subfield => $title ),
+    );  
+
+    ( $tag, $subfield ) = $marcflavour eq 'UNIMARC' ? ( 200, 'f' ) : ( 100, 'a' );
+    $record->append_fields(
+        MARC::Field->new( $tag, ' ', ' ', $subfield => $author ),
+    );  
+
+    ( $tag, $subfield ) = $marcflavour eq 'UNIMARC' ? ( 995, 'r' ) : ( 942, 'c' );
+    $record->append_fields(
+        MARC::Field->new( $tag, ' ', ' ', $subfield => $itemtype )
+    );  
+
+    my ($biblio_id) = C4::Biblio::AddBiblio( $record, $frameworkcode );
 done_testing();
