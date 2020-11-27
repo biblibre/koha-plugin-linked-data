@@ -73,6 +73,20 @@ sub tool {
     return $self->output_html( $template->output() );
 }
 
+sub get_ark_id_for_biblio {
+    my ($self, $biblionumber) = @_;
+    my $ark_id;
+
+    my $marc_record = Koha::Biblios->find($biblionumber)->metadata->record;
+    $ark_id = $marc_record->subfield('033','a');
+
+    return $ark_id;
+}
+
+sub get_wikidata_for_biblio {
+    my ($self, $foo) = @_;
+}
+
 sub intranet_catalog_biblio_tab {                                                                                                                           
     my ( $self, $args ) = @_;
     my @tabs;                                                                                                                                               
@@ -80,12 +94,10 @@ sub intranet_catalog_biblio_tab {
     my $biblionumber = $query->param('biblionumber');
 warn Data::Dumper::Dumper $query;
     my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
-    my $ark_id;
+    my $ark_id = $self->get_ark_id_for_biblio($biblionumber);
 
     return @tabs unless $biblionumber;
 
-    my $marc_record = Koha::Biblios->find($biblionumber)->metadata->record;
-    $ark_id = $marc_record->subfield('033','a');
     warn $ark_id;
     return @tabs unless $ark_id;
 

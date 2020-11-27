@@ -73,6 +73,13 @@ $cgi_mock->mock(
     }   
 );
 
+my $rdf_mock = Test::MockModule->new('RDF::Query::Client');
+$rdf_mock->mock(
+    execute => sub {
+            return 'toto';
+    }   
+);
+
 #TODO: test instanciation plugin
 my $plugin = Koha::Plugin::Com::BibLibre::LinkedData->new;
 ok $plugin;
@@ -81,6 +88,9 @@ my @table = $plugin->intranet_catalog_biblio_tab;
 is(ref $table[0],'Koha::Plugins::Tab');
 
 is($plugin->get_ark_id_for_biblio($biblio_id),'ark:/12148/cb15037560d');
+
+# RDF::Trine::Iterator
+is($plugin->get_wikidata_for_biblio($biblio_id), 'toto');
 
 
 
