@@ -1,6 +1,3 @@
-use Modern::Perl;
-
-use Test::More;
 #!/usr/bin/perl
 
 # This file is part of Koha.
@@ -24,6 +21,10 @@ use t::lib::TestBuilder;
 use Test::More;
 use File::Spec;
 use File::Find;
+use CGI;
+use XML::LibXML;
+
+use Koha::Plugin::Com::BibLibre::LinkedData;
 
 =head1 DESCRIPTION
 =cut
@@ -52,24 +53,16 @@ find(
     $lib
 );
 
-#my $biblio = $builder->build_sample_biblio();
-#warn Data::Dumper::Dumper($biblio->biblionumber);
-
-    my $record = MARC::Record->new();
-    my ( $tag, $subfield ) = $marcflavour eq 'UNIMARC' ? ( 200, 'a' ) : ( 245, 'a' );
-    $record->append_fields(
-        MARC::Field->new( $tag, ' ', ' ', $subfield => $title ),
+my $record = MARC::Record->new();
+$record->append_fields(
+        MARC::Field->new( '033', ' ', ' ', 'a' => 'ark:/12148/cb15037560d' ),
     );  
 
-    ( $tag, $subfield ) = $marcflavour eq 'UNIMARC' ? ( 200, 'f' ) : ( 100, 'a' );
     $record->append_fields(
-        MARC::Field->new( $tag, ' ', ' ', $subfield => $author ),
+        MARC::Field->new( '200', ' ', ' ', 'a' => 'Harry Potdbeurre' ),
     );  
 
-    ( $tag, $subfield ) = $marcflavour eq 'UNIMARC' ? ( 995, 'r' ) : ( 942, 'c' );
-    $record->append_fields(
-        MARC::Field->new( $tag, ' ', ' ', $subfield => $itemtype )
-    );  
-
-    my ($biblio_id) = C4::Biblio::AddBiblio( $record, $frameworkcode );
+    my ($biblio_id) = C4::Biblio::AddBiblio( $record, '');
+    #TODO: test instanciation plugin
+    intranet_catalog_biblio_tab
 done_testing();
