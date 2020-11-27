@@ -55,14 +55,68 @@ find(
 
 my $record = MARC::Record->new();
 $record->append_fields(
-        MARC::Field->new( '033', ' ', ' ', 'a' => 'ark:/12148/cb15037560d' ),
-    );  
+    MARC::Field->new( '033', ' ', ' ', 'a' => 'ark:/12148/cb15037560d' ),
+);  
 
-    $record->append_fields(
-        MARC::Field->new( '200', ' ', ' ', 'a' => 'Harry Potdbeurre' ),
-    );  
+$record->append_fields(
+    MARC::Field->new( '200', ' ', ' ', 'a' => 'Harry Potdbeurre' ),
+);  
 
-    my ($biblio_id) = C4::Biblio::AddBiblio( $record, '');
-    #TODO: test instanciation plugin
-    intranet_catalog_biblio_tab
+my ($biblio_id) = C4::Biblio::AddBiblio( $record, '');
+
+
+#TODO: test instanciation plugin
+my $plugin = Koha::Plugin::Com::BibLibre::LinkedData->new;
+ok $plugin;
+
+my @table = $plugin->intranet_catalog_biblio_tab;
+is(ref $table[0],'Koha::Plugins::Tab');
+
+##mocker le return param de CGI 
+my $xml_simple = Test::MockModule->new('XML::Simple');
+$xml_simple->mock(
+    XMLin => sub {
+        if ( $parsing_result eq 'error' ) { 
+            croak "Something";
+        } else {
+            return "XML data";
+        }   
+    }   
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 done_testing();
