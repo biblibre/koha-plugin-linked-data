@@ -5,6 +5,7 @@ use base qw(Koha::Plugins::Base);
 use Modern::Perl;
 use RDF::Query::Client; 
 use Data::Dumper;
+use CGI qw ( -utf8 );
 
 use C4::Context;
 use Koha::Plugins::Tab;
@@ -30,6 +31,8 @@ sub new {
     $args->{'metadata'}->{'class'} = $class;
 
     my $self = $class->SUPER::new($args);
+    #my $query = $self->{'cgi'};
+warn Data::Dumper::Dumper $self;
 
     return $self;
 }
@@ -75,6 +78,7 @@ sub intranet_catalog_biblio_tab {
     my ( $self, $args ) = @_;
     my @tabs;                                                                                                                                               
     my $query = $self->{'cgi'};
+warn Data::Dumper::Dumper $query;
     my $biblio = $query->param('biblio');
     my $biblionumber = $query->param('biblionumber');
     my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
