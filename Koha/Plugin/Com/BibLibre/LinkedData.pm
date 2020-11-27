@@ -75,10 +75,14 @@ sub tool {
 
 sub get_ark_id_for_biblio {
     my ($self, $biblionumber) = @_;
-    my $ark_id;
 
-    my $marc_record = Koha::Biblios->find($biblionumber)->metadata->record;
-    $ark_id = $marc_record->subfield('033','a');
+    return '' unless $biblionumber;
+
+    my $record = Koha::Biblios->find($biblionumber);
+    return '' unless $record;
+
+    my $marc_record = $record->metadata->record;
+    my $ark_id = $marc_record->subfield('033','a');
 
     return $ark_id;
 }
