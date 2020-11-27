@@ -39,21 +39,6 @@ unshift( @INC, '/home/koha/src/' );
 unshift( @INC, '/home/koha/src/misc/translator/' );
 unshift( @INC, '/home/koha/src/t/lib/' );
 
-find(
-    {
-        bydepth  => 1,
-        no_chdir => 1,
-        wanted   => sub {
-            my $m = $_;
-            return unless $m =~ s/[.]pm$//;
-            $m =~ s{^.*/Koha/}{Koha/};
-            $m =~ s{/}{::}g;
-            use_ok($m) || BAIL_OUT("***** PROBLEMS LOADING FILE '$m'");
-        },
-    },
-    $lib
-);
-
 my $record = MARC::Record->new();
 $record->append_fields(
     MARC::Field->new( '033', ' ', ' ', 'a' => 'ark:/12148/cb15037560d' ),
@@ -65,7 +50,6 @@ $record->append_fields(
 
 my ($biblio_id) = C4::Biblio::AddBiblio( $record, '');
 
-##mocker le return param de CGI 
 my $cgi_mock = Test::MockModule->new('CGI');
 $cgi_mock->mock(
     param => sub {
@@ -73,24 +57,20 @@ $cgi_mock->mock(
     }   
 );
 
-#my $rdf_mock = Test::MockModule->new('RDF::Query::Client');
-#$rdf_mock->mock(
-#    execute => sub {
-#            return 'toto';
-#    }   
-#);
-
-#TODO: test instanciation plugin
 my $plugin = Koha::Plugin::Com::BibLibre::LinkedData->new;
-ok $plugin;
-
 my @table = $plugin->intranet_catalog_biblio_tab;
-is(ref $table[0],'Koha::Plugins::Tab');
 
-is($plugin->get_ark_id_for_biblio($biblio_id),'ark:/12148/cb15037560d');
-is($plugin->get_ark_id_for_biblio(qq()),'');
-is($plugin->get_ark_id_for_biblio(undef),'');
-is($plugin->get_ark_id_for_biblio('plop'),'');
+subtest 'testing setup' => sub {
+    ok $plugin;
+    is(ref $table[0],'Koha::Plugins::Tab');
+};
+
+subtest 'testings mocks' => sub {  
+    is($plugin->get_ark_id_for_biblio($biblio_id),'ark:/12148/cb15037560d');
+    is($plugin->get_ark_id_for_biblio(qq()),'');
+    is($plugin->get_ark_id_for_biblio(undef),'');
+    is($plugin->get_ark_id_for_biblio('plop'),'');
+};
 
 # RDF::Trine::Iterator
 #is($plugin->get_wikidata_for_biblio($biblio_id), 'toto');
