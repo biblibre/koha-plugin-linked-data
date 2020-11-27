@@ -9,6 +9,7 @@ use CGI qw ( -utf8 );
 
 use C4::Context;
 use Koha::Plugins::Tab;
+use Koha::Biblios;
 
 
 our $VERSION = '0.1';
@@ -31,9 +32,7 @@ sub new {
     $args->{'metadata'}->{'class'} = $class;
 
     my $self = $class->SUPER::new($args);
-    #my $query = $self->{'cgi'};
-warn Data::Dumper::Dumper $self;
-
+    $self->{cgi} = CGI->new;
     return $self;
 }
 
@@ -78,15 +77,14 @@ sub intranet_catalog_biblio_tab {
     my ( $self, $args ) = @_;
     my @tabs;                                                                                                                                               
     my $query = $self->{'cgi'};
-warn Data::Dumper::Dumper $query;
-    my $biblio = $query->param('biblio');
     my $biblionumber = $query->param('biblionumber');
+warn Data::Dumper::Dumper $query;
     my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
     my $ark_id;
 
-    return @tabs unless $biblio;
+    return @tabs unless $biblionumber;
 
-    my $marc_record = $biblio->metadata->record;
+    my $marc_record = Koha::Biblios->find($biblionumber)->metadata->record;
     $ark_id = $marc_record->subfield('033','a');
     warn $ark_id;
     return @tabs unless $ark_id;
@@ -95,6 +93,7 @@ warn Data::Dumper::Dumper $query;
     my $iterator = $rdfquery->execute($endpoint);
 
     my @rdf_data;
+    push @tabs, Koha::Plugins::Tab->new( {title => 'ARK-ID', content => $ark_id});
     while (my $row = $iterator->next) {
       push @tabs,
       Koha::Plugins::Tab->new(                                                                                                                              
