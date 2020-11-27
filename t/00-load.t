@@ -23,6 +23,7 @@ use File::Spec;
 use File::Find;
 use CGI;
 use XML::LibXML;
+use Test::MockModule;
 
 use Koha::Plugin::Com::BibLibre::LinkedData;
 
@@ -64,6 +65,13 @@ $record->append_fields(
 
 my ($biblio_id) = C4::Biblio::AddBiblio( $record, '');
 
+##mocker le return param de CGI 
+my $cgi_mock = Test::MockModule->new('CGI');
+$cgi_mock->mock(
+    param => sub {
+            return $biblio_id;
+    }   
+);
 
 #TODO: test instanciation plugin
 my $plugin = Koha::Plugin::Com::BibLibre::LinkedData->new;
@@ -72,20 +80,7 @@ ok $plugin;
 my @table = $plugin->intranet_catalog_biblio_tab;
 is(ref $table[0],'Koha::Plugins::Tab');
 
-##mocker le return param de CGI 
-my $xml_simple = Test::MockModule->new('XML::Simple');
-$xml_simple->mock(
-    XMLin => sub {
-        if ( $parsing_result eq 'error' ) { 
-            croak "Something";
-        } else {
-            return "XML data";
-        }   
-    }   
-);
-
-
-
+is($plugin->get_ark_id_for_biblio($biblio_id),'ark:/12148/cb15037560d');
 
 
 
