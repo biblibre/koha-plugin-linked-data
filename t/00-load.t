@@ -65,46 +65,18 @@ subtest 'testing setup' => sub {
     is(ref $table[0],'Koha::Plugins::Tab');
 };
 
-subtest 'testings mocks' => sub {  
+subtest 'get ARK id inside Koha' => sub {  
     is($plugin->get_ark_id_for_biblio($biblio_id),'ark:/12148/cb15037560d');
     is($plugin->get_ark_id_for_biblio(qq()),'');
     is($plugin->get_ark_id_for_biblio(undef),'');
     is($plugin->get_ark_id_for_biblio('plop'),'');
 };
 
+#subtest 'get corresponding Work id in Wikidata' => sub {  
+#    is($plugin->get_wikidata_id_for_biblio($biblio_id), 'wd:Q46751');
+#};
+
 # RDF::Trine::Iterator
 #is($plugin->get_wikidata_for_biblio($biblio_id), 'toto');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 done_testing();

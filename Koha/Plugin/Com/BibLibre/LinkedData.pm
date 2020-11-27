@@ -87,8 +87,14 @@ sub get_ark_id_for_biblio {
     return $ark_id;
 }
 
+sub get_wikidata_id_for_biblio {
+    my ($self, $foo) = @_;
+    # https://w.wiki/oJi
+}
+
 sub get_wikidata_for_biblio {
     my ($self, $foo) = @_;
+    # https://w.wiki/o4j
 }
 
 sub intranet_catalog_biblio_tab {                                                                                                                           
