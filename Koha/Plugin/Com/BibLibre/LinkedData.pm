@@ -102,7 +102,10 @@ sub get_wikidata_for_biblio {
       FILTER(CONTAINS(?idbnf, "$wk_id"))
       OPTIONAL { ?narrative_location_id wdt:P840 ?lieu. }
       OPTIONAL { ?narrative_location_id wdt:P1476 ?narrative_location. }
-      }/);
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
+      } 
+      ORDER BY DESC(?narrative_location)
+      LIMIT 5/);
 
     my @narrative_locations;
 
