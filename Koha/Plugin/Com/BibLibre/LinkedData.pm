@@ -87,7 +87,7 @@ sub get_ark_id_for_biblio {
     return $ark_id;
 }
 
-sub get_wikidata_id_for_biblio {
+sub get_wikidata_for_biblio {
     my ($self, $ark_id) = @_;
     return "" unless $ark_id; 
     # https://w.wiki/oJi
@@ -95,43 +95,37 @@ sub get_wikidata_id_for_biblio {
 
     $ark_id =~ /.*cb(.*)$/;
     my $wk_id = $1;
-warn $wk_id;
-    my $rdfquery = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$wk_id") . }/);
+
+    my $rdfquery = RDF::Query::Client->new(qq/
+      SELECT ?wdwork ?narrative_location_id ?narrative_location WHERE {
+      ?wdwork wdt:P268 ?idbnf.
+      FILTER(CONTAINS(?idbnf, "$wk_id"))
+      OPTIONAL { ?narrative_location_id wdt:P840 ?lieu. }
+      OPTIONAL { ?narrative_location_id wdt:P1476 ?narrative_location. }
+      }/);
+
+    my @narrative_locations;
+
     my $iterator = $rdfquery->execute($endpoint);
     while (my $row = $iterator->next) {
-        return $row->{wdwork}->as_string;
+warn Data::Dumper::Dumper ($row);
+        push @narrative_locations, $row->{narrative_location}->as_string;
     }
+    return @narrative_locations;
 
-#    my @rdf_data;
-#push @tabs, Koha::Plugins::Tab->new( {title => 'ARK-ID', content => $ark_id});
-#    while (my $row = $iterator->next) {
-#      push @tabs,
-#      Koha::Plugins::Tab->new(                                                                                                                              
-#        {                                                                                                                                                   
-#            title   => 'WikiData',                                                                                                                            
-#            content => $row->{s}->as_string
-#        }                                                                                                                                                   
-#      );                                                                                                                                                    
-#    }
 }
 
-sub get_wikidata_for_biblio {
-    my ($self, $foo) = @_;
-    # https://w.wiki/o4j
-}
 
 sub intranet_catalog_biblio_tab {                                                                                                                           
     my ( $self, $args ) = @_;
     my @tabs;                                                                                                                                               
     my $query = $self->{'cgi'};
     my $biblionumber = $query->param('biblionumber');
-warn Data::Dumper::Dumper $query;
     my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
     my $ark_id = $self->get_ark_id_for_biblio($biblionumber);
 
     return @tabs unless $biblionumber;
 
-    warn $ark_id;
     return @tabs unless $ark_id;
 
     my $rdfquery = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$ark_id") . }/);
