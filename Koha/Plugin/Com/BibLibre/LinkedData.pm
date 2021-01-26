@@ -88,8 +88,27 @@ sub get_ark_id_for_biblio {
 }
 
 sub get_wikidata_id_for_biblio {
-    my ($self, $foo) = @_;
+    my ($self, $ark_id) = @_;
+    return "" unless $ark_id; 
     # https://w.wiki/oJi
+    my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
+
+    $ark_id =~ /.*cb(.*)$/;
+warn $ark_id;
+    my $rdfquery = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$ark_id") . }/);
+    my $iterator = $rdfquery->execute($endpoint);
+
+#    my @rdf_data;
+#push @tabs, Koha::Plugins::Tab->new( {title => 'ARK-ID', content => $ark_id});
+#    while (my $row = $iterator->next) {
+#      push @tabs,
+#      Koha::Plugins::Tab->new(                                                                                                                              
+#        {                                                                                                                                                   
+#            title   => 'WikiData',                                                                                                                            
+#            content => $row->{s}->as_string
+#        }                                                                                                                                                   
+#      );                                                                                                                                                    
+#    }
 }
 
 sub get_wikidata_for_biblio {

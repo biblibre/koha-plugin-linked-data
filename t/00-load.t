@@ -72,9 +72,10 @@ subtest 'get ARK id inside Koha' => sub {
     is($plugin->get_ark_id_for_biblio('plop'),'');
 };
 
-#subtest 'get corresponding Work id in Wikidata' => sub {  
-#    is($plugin->get_wikidata_id_for_biblio($biblio_id), 'wd:Q46751');
-#};
+my $ark_id = 'ark:/12148/cb15037560d';
+subtest 'get corresponding Work id in Wikidata' => sub {  
+    is($plugin->get_wikidata_id_for_biblio($ark_id), 'wd:Q46751');
+};
 
 # RDF::Trine::Iterator
 #is($plugin->get_wikidata_for_biblio($biblio_id), 'toto');
