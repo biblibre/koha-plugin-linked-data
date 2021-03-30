@@ -74,7 +74,11 @@ subtest 'get ARK id inside Koha' => sub {
 
 my $ark_id = 'ark:/12148/cb15037560d';
 subtest 'get corresponding data in Wikidata' => sub {  
-    is($plugin->get_wikidata_for_biblio($ark_id), 'wd:Q46751');
+    my $results = $plugin->get_wikidata_for_biblio($ark_id);
+    is($results->{'http://www.wikidata.org/entity/Q3276444'}, "Little Hangleton");
+    is($results->{'http://www.wikidata.org/entity/Q3356101'}, "Little Whinging");
+    is($results->{'http://www.wikidata.org/entity/Q15299049'}, "Hogwarts grounds");
+
 };
 
 # RDF::Trine::Iterator

@@ -96,25 +96,35 @@ sub get_wikidata_for_biblio {
     $ark_id =~ /.*cb(.*)$/;
     my $wk_id = $1;
 
+    #my $rdfquery = RDF::Query::Client->new(qq/
+    #  SELECT ?wdwork ?narrative_location_id ?narrative_location WHERE {
+    #  ?wdwork wdt:P268 ?idbnf.
+    #  FILTER(CONTAINS(?idbnf, "$wk_id"))
+    #  OPTIONAL { ?narrative_location_id wdt:P840 ?lieu. }
+    #  OPTIONAL { ?narrative_location_id wdt:P1476 ?narrative_location. }
+    #  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
+    #  } 
+    #  ORDER BY DESC(?narrative_location)
+    #  LIMIT 5/);
+
     my $rdfquery = RDF::Query::Client->new(qq/
-      SELECT ?wdwork ?narrative_location_id ?narrative_location WHERE {
+      SELECT ?narrativelocation ?narrativelocationLabel
+      WHERE {
       ?wdwork wdt:P268 ?idbnf.
       FILTER(CONTAINS(?idbnf, "$wk_id"))
-      OPTIONAL { ?narrative_location_id wdt:P840 ?lieu. }
-      OPTIONAL { ?narrative_location_id wdt:P1476 ?narrative_location. }
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
-      } 
-      ORDER BY DESC(?narrative_location)
-      LIMIT 5/);
+      OPTIONAL { ?wdwork wdt:P840 ?narrativelocation. }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+      }/);
 
-    my @narrative_locations;
+    my $narrative_locations;
 
     my $iterator = $rdfquery->execute($endpoint);
     while (my $row = $iterator->next) {
-warn Data::Dumper::Dumper ($row);
-        push @narrative_locations, $row->{narrative_location}->as_string;
+#warn Data::Dumper::Dumper ($row);
+	my $uri_value = $row->{narrativelocation}->uri_value;
+        $narrative_locations->{ $uri_value } = $row->{narrativelocationLabel}->value;
     }
-    return @narrative_locations;
+    return $narrative_locations;
 
 }
 
