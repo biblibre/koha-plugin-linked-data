@@ -141,30 +141,15 @@ sub intranet_catalog_biblio_tab {
 
     return @tabs unless $ark_id;
 
-    my $rdfquery = RDF::Query::Client->new(qq/SELECT ?wdwork WHERE { ?wdwork wdt:P268 ?idbnf FILTER CONTAINS(?idbnf, "$ark_id") . }/);
-    my $iterator = $rdfquery->execute($endpoint);
-
-    my @rdf_data;
-    push @tabs, Koha::Plugins::Tab->new( {title => 'ARK-ID', content => $ark_id});
-    while (my $row = $iterator->next) {
-      push @tabs,
-      Koha::Plugins::Tab->new(                                                                                                                              
-        {                                                                                                                                                   
-            title   => 'WikiData',                                                                                                                            
-            content => $row->{s}->as_string
-        }                                                                                                                                                   
-      );                                                                                                                                                    
+    # FIXME
+    my $narrative_locations = $self->get_wikidata_for_biblio($ark_id);
+    my $tmpl_narrative_location;
+    foreach $narrative_location (keys %$narrative_locations) {
+        $tmpl_narrative_location .= $narrative_locations->{$narrative_location};
     }
 
-                                                                                                                                                            
-    push @tabs,                                                                                                                                             
-      Koha::Plugins::Tab->new(                                                                                                                              
-        {                                                                                                                                                   
-            title   => 'Tab 2',                                                                                                                             
-            content => 'This is content for tab 2'                                                                                                          
-        }                                                                                                                                                   
-      );                                                                                                                                                    
-                                                                                                                                                            
+    push @tabs, Koha::Plugins::Tab->new( {title => 'LRM', content => $tmpl_narrative_location});
+
     return @tabs;                                                                                                                                           
 }                                                                                                                                                           
    
