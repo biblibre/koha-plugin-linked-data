@@ -88,13 +88,11 @@ sub get_ark_id_for_biblio {
 }
 
 sub get_wikidata_for_biblio {
-    my ($self, $ark_id) = @_;
-    return "" unless $ark_id; 
+    my ($self, $simple_ark_id) = @_;
+    return "" unless $simple_ark_id; 
     # https://w.wiki/oJi
     my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
 
-    $ark_id =~ /.*cb(.*)$/;
-    my $wk_id = $1;
 
     #my $rdfquery = RDF::Query::Client->new(qq/
     #  SELECT ?wdwork ?narrative_location_id ?narrative_location WHERE {
@@ -111,7 +109,7 @@ sub get_wikidata_for_biblio {
       SELECT ?narrativelocation ?narrativelocationLabel
       WHERE {
       ?wdwork wdt:P268 ?idbnf.
-      FILTER(CONTAINS(?idbnf, "$wk_id"))
+      FILTER(CONTAINS(?idbnf, "$simple_ark_id"))
       OPTIONAL { ?wdwork wdt:P840 ?narrativelocation. }
       SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
       }/);
@@ -128,6 +126,31 @@ sub get_wikidata_for_biblio {
 
 }
 
+sub get_set_in_period {
+    my ($self, $simple_ark_id) = @_;
+    my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
+    my $rdfquery = RDF::Query::Client->new(qq/
+      SELECT ?setinperiod  ?setinperiodLabel
+       WHERE {
+       ?wdwork wdt:P268 ?idbnf.
+       FILTER(CONTAINS(?idbnf, "$simple_ark_id"))
+       OPTIONAL { ?wdwork wdt:P2408 ?setinperiod. }
+       SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],  en". }  
+      }/);
+    my $set_in_period;      
+    my $iterator = $rdfquery->execute($endpoint);
+    while (my $row = $iterator->next) {
+	my $uri_value = $row->{setinperiod}->uri_value;
+        $set_in_period->{ $uri_value } = $row->{setinperiodLabel}->value;
+    }
+    return $set_in_period;
+}
+
+sub ark_id_to_simple_ark_id {
+    my ($self, $ark_id) = @_;
+    $ark_id =~ /.*cb(.*)$/;
+    return $1;
+}
 
 sub intranet_catalog_biblio_tab {                                                                                                                           
     my ( $self, $args ) = @_;
@@ -140,13 +163,19 @@ sub intranet_catalog_biblio_tab {
     return @tabs unless $biblionumber;
 
     return @tabs unless $ark_id;
+    my $simple_ark_id = $self->ark_id_to_simple_ark_id($ark_id);
+    my $narrative_locations = $self->get_wikidata_for_biblio($simple_ark_id);
+    my $set_in_period_dates = $self->get_set_in_period($simple_ark_id);
 
-    # FIXME
-    my $narrative_locations = $self->get_wikidata_for_biblio($ark_id);
-    my $tmpl_narrative_location;
-    foreach $narrative_location (keys %$narrative_locations) {
-        $tmpl_narrative_location .= $narrative_locations->{$narrative_location};
+    my $reading_context = "<h3>Contexte de Lecture:</h3><ul>";
+
+    my $set_in_period = "<li>À l'époque: </li>"; 
+
+    my $tmpl_narrative_location = "<li>Les lieux de l'action sont: ";
+    foreach my $narrative_location (keys %$narrative_locations) {
+        $tmpl_narrative_location .= "<a href=\"" . $narrative_location . "\">". $narrative_locations->{$narrative_location} . "</a> ";
     }
+    $tmpl_narrative_location .= "</li></ul>";
 
     push @tabs, Koha::Plugins::Tab->new( {title => 'LRM', content => $tmpl_narrative_location});
 
