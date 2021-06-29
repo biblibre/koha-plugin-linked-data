@@ -146,6 +146,38 @@ sub get_set_in_period {
     return $set_in_period;
 }
 
+
+sub get_part_of_series {
+    my ($self, $simple_ark_id) = @_;
+    my $endpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql";
+    my $rdfquery = RDF::Query::Client->new(qq/
+      SELECT ?partoftheserie ?partoftheserieLabel ?follows ?followsLabel ?followedby ?followedbyLabel       
+      WHERE {                                                                                                              
+        ?wdwork wdt:P268 ?idbnf.                                                                                                 
+        FILTER(CONTAINS(?idbnf, "$simple_ark_id"))  
+        OPTIONAL { ?wdwork wdt:P179 ?partoftheserie . } 
+        OPTIONAL { ?wdwork wdt:P155 ?follows . } 
+        OPTIONAL { ?wdwork wdt:P156 ?followedby . }  
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],  en". }  
+     }/);
+    # FIXME / NEXT: refacto de la structure de renvoi et affichage dans le template
+    # NEXT: tests et refacto
+    # NOTE: les données wikidata ne sont pas complètes sur les séries et le followedby n'est jamais renseigné (?)
+    my $part_of_series;      
+    my $iterator = $rdfquery->execute($endpoint);
+    while (my $row = $iterator->next) {
+        $part_of_series->{ "partoftheserie"} = $row->{partoftheserie}->value;
+        $part_of_series->{ "partoftheserieLabel"} = $row->{partoftheserieLabel}->value;
+        $part_of_series->{ "follows"} = $row->{follows}->value;
+        $part_of_series->{ "followsLabel"} = $row->{followsLabel}->value;
+        $part_of_series->{ "followedby"} = $row->{followedby}->value;
+        $part_of_series->{ "followedbyLabel"} = $row->{followedbyLabel}->value;
+    }
+    return $part_of_series;
+
+
+}
+
 sub ark_id_to_simple_ark_id {
     my ($self, $ark_id) = @_;
     $ark_id =~ /.*cb(.*)$/;
@@ -167,17 +199,25 @@ sub intranet_catalog_biblio_tab {
     my $narrative_locations = $self->get_wikidata_for_biblio($simple_ark_id);
     my $set_in_period_dates = $self->get_set_in_period($simple_ark_id);
 
-    my $reading_context = "<h3>Contexte de Lecture:</h3><ul>";
+    my $tmpl_content = "<h3>Contexte de Lecture:</h3><ul>";
 
-    my $set_in_period = "<li>À l'époque: </li>"; 
 
-    my $tmpl_narrative_location = "<li>Les lieux de l'action sont: ";
+    $tmpl_content .= "<li>Les lieux de l'action sont: ";
     foreach my $narrative_location (keys %$narrative_locations) {
-        $tmpl_narrative_location .= "<a href=\"" . $narrative_location . "\">". $narrative_locations->{$narrative_location} . "</a> ";
+        $tmpl_content .= "<a href=\"" . $narrative_location . "\">". $narrative_locations->{$narrative_location} . "</a> ";
     }
-    $tmpl_narrative_location .= "</li></ul>";
+    $tmpl_content .= "</li>";
 
-    push @tabs, Koha::Plugins::Tab->new( {title => 'LRM', content => $tmpl_narrative_location});
+    $tmpl_content .= "<li>A l'epoque: "; 
+    foreach my $set_in_period_date (keys %$set_in_period_dates) {
+        $tmpl_content .= $set_in_period_dates->{$set_in_period_date} . " ";
+    }
+    $tmpl_content .= "</li>";
+
+
+    $tmpl_content .= "</ul>";
+
+    push @tabs, Koha::Plugins::Tab->new( {title => 'LRM', content => $tmpl_content});
 
     return @tabs;                                                                                                                                           
 }                                                                                                                                                           
